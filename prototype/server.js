@@ -41,21 +41,22 @@ async function cc_call(fn_name, args){
     const gateway = new Gateway();
     await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
     const network = await gateway.getNetwork('mychannel');
-    const contract = network.getContract('teamate');
+    const contract = network.getContract('labeld');
 
     var result;
     
-    if(fn_name == 'addUser')
-        result = await contract.submitTransaction('addUser', args);
-    else if( fn_name == 'addRating')
+    if(fn_name == 'addDataset')
+        result = await contract.submitTransaction('addDataset', args);
+    else if( fn_name == 'addTask')
     {
-        e=args[0];
-        p=args[1];
-        s=args[2];
-        result = await contract.submitTransaction('addRating', e, p, s);
+        dID=args[0];
+        iID=args[1];
+        uID=args[2];
+        day=args[3];
+        result = await contract.submitTransaction('addTask', dID, iID, uID,day);
     }
-    else if(fn_name == 'readRating')
-        result = await contract.evaluateTransaction('readRating', args);
+    else if(fn_name == 'readDataset')
+        result = await contract.evaluateTransaction('readDataset', args);
     else
         result = 'not supported function'
 
@@ -63,36 +64,37 @@ async function cc_call(fn_name, args){
 }
 
 // create mate
-app.post('/mate', async(req, res)=>{
-    const email = req.body.email;
-    console.log("add mate email: " + email);
+app.post('/addDataset', async(req, res)=>{
+    const dataid = req.body.datasetID;
+    console.log("add dataset: " + dataid);
 
-    result = cc_call('addUser', email)
+    result = cc_call('addDataset', dataid)
 
     const myobj = {result: "success"}
     res.status(200).json(myobj) 
 })
 
 // add score
-app.post('/score', async(req, res)=>{
-    const email = req.body.email;
-    const prj = req.body.project;
-    const sc = req.body.score;
-    console.log("add project email: " + email);
-    console.log("add project name: " + prj);
-    console.log("add project score: " + sc);
+app.post('/addTask', async(req, res)=>{
+    const dataid = req.body.datasetID;
+    const imageid = req.body.imageID;
+    const userid = req.body.userID;
+    const date = req.body.date;
+    console.log("DataSetID is: " + dataid);
+    console.log("add image: " + imageid);
+    console.log("add userId " + userid);
+    console.log("Date " + date);
 
-    var args=[email, prj, sc];
-    result = cc_call('addRating', args)
+    var args=[dataid,imageid,userid,date];
+    result = cc_call('addTask', args)
 
     const myobj = {result: "success"}
     res.status(200).json(myobj) 
 })
 
-// find mate
-app.post('/mate/:email', async (req,res)=>{
-    const email = req.body.email;
-    console.log("email: " + req.body.email);
+app.post('/readDataset/:dataid', async (req,res)=>{
+    const dataid = req.body.datasetID;
+    console.log("DataSetID: " + req.body.datasetID);
     const walletPath = path.join(process.cwd(), 'wallet');
     const wallet = new FileSystemWallet(walletPath);
     console.log(`Wallet path: ${walletPath}`);
@@ -107,12 +109,10 @@ app.post('/mate/:email', async (req,res)=>{
     const gateway = new Gateway();
     await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
     const network = await gateway.getNetwork('mychannel');
-    const contract = network.getContract('teamate');
-    const result = await contract.evaluateTransaction('readRating', email);
+    const contract = network.getContract('labeld');
+    const result = await contract.evaluateTransaction('readDataset', dataid);
     const myobj = JSON.parse(result)
     res.status(200).json(myobj)
-    // res.status(200).json(result)
-
 });
 
 // server start
